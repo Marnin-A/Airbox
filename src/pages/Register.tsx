@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Store, Mail, Phone, Loader2 } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { useCallback, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Store, Mail, Loader2, Eye, EyeOffIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import {
 	Card,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import {
@@ -26,11 +24,15 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from "@/lib/schemas";
 import * as z from "zod";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import axios from "axios";
 
 const Register = () => {
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
 	const [googleLoading, setGoogleLoading] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
 
 	const form = useForm({
 		resolver: zodResolver(registerSchema),
@@ -46,59 +48,48 @@ const Register = () => {
 		setLoading(true);
 
 		try {
-			// Create auth user
-			const { data: authData, error: authError } = await supabase.auth.signUp({
-				email: values.email,
-				password: values.password,
-			});
+			// Register user using MongoDB
+			const response = await axios.post(
+				`${import.meta.env.VITE_SERVER_URL}/api/register`,
+				values
+			);
+			console.log(response);
 
-			if (authError) throw authError;
-
-			if (authData.user) {
-				// Create profile
-				const { error: profileError } = await supabase.from("profiles").insert({
-					id: authData.user.id,
-					business_name: values.businessName,
-					contact_email: values.email,
-					phone: values.phone,
-				});
-
-				if (profileError) throw profileError;
-
+			if (response.data.success) {
 				toast.success(
 					"Registration successful! Please check your email to verify your account."
 				);
-				navigate("/");
+				// navigate("/");
+			} else {
+				if (response.data.message.includes("E11000")) {
+					toast.error("Email already exists");
+				} else {
+					toast.error(`Registration failed: ${response.data.message}`);
+				}
 			}
-		} catch (error) {
-			toast.error("Registration failed. Please try again.");
+		} catch (error: unknown) {
+			toast.error(
+				`Registration failed. Please try again.\n ${(error as Error).message}`
+			);
 			console.error("Registration error:", error);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleGoogleSignIn = async () => {
+	const handleGoogleSignIn = () => {
 		setGoogleLoading(true);
-		try {
-			const { error } = await supabase.auth.signInWithOAuth({
-				provider: "google",
-				options: {
-					redirectTo: `${window.location.origin}/settings`,
-					queryParams: {
-						access_type: "offline",
-						prompt: "consent",
-					},
-				},
-			});
-
-			if (error) throw error;
-		} catch (error) {
-			toast.error("Google sign-in failed. Please try again.");
-			console.error("Google sign-in error:", error);
-			setGoogleLoading(false);
-		}
+		window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/google`;
+		setGoogleLoading(false);
 	};
+
+	const handleShowPassword = useCallback(
+		(event: React.MouseEvent<HTMLButtonElement>) => {
+			event.preventDefault();
+			setShowPassword(!showPassword);
+		},
+		[showPassword]
+	);
 
 	return (
 		<div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -165,7 +156,7 @@ const Register = () => {
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit)}
-								className="grid gap-4"
+								className="grid gap-4 mt-4"
 							>
 								<FormField
 									control={form.control}
@@ -179,6 +170,7 @@ const Register = () => {
 													<Input
 														type="text"
 														placeholder="Your Business Name"
+														autoComplete="name"
 														className="pl-10"
 														{...field}
 													/>
@@ -215,17 +207,25 @@ const Register = () => {
 									control={form.control}
 									name="password"
 									render={({ field }) => (
-										<FormItem>
+										<FormItem className="relative">
 											<FormLabel>Password</FormLabel>
 											<FormControl>
 												<Input
-													type="password"
+													type={showPassword ? "text" : "password"}
 													placeholder="••••••••"
 													minLength={8}
+													autoComplete="new-password"
 													{...field}
 												/>
 											</FormControl>
 											<FormMessage />
+											<Button
+												className="absolute cursor-pointer hover:bg-transparent right-0 top-5.5"
+												variant="ghost"
+												onClick={handleShowPassword}
+											>
+												{showPassword ? <Eye /> : <EyeOffIcon />}
+											</Button>
 										</FormItem>
 									)}
 								/>
@@ -236,23 +236,25 @@ const Register = () => {
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>Phone Number</FormLabel>
-											<div className="relative">
-												<Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-												<FormControl>
-													<Input
-														type="tel"
-														placeholder="+1 (555) 123-4567"
-														className="pl-10"
-														{...field}
-													/>
-												</FormControl>
-											</div>
+
+											{/* <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" /> */}
+											<FormControl>
+												<PhoneInput
+													defaultCountry="NG"
+													type="tel"
+													autoComplete="phone"
+													placeholder="+1 (555) 123-4567"
+													className="w-full p-1 pl-2 border rounded-md"
+													{...field}
+												/>
+											</FormControl>
+
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
 
-								<Button variant="outline" type="submit" disabled={loading}>
+								<Button type="submit" disabled={loading}>
 									{loading ? (
 										<>
 											<Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
@@ -262,6 +264,12 @@ const Register = () => {
 										"Register with Email"
 									)}
 								</Button>
+								<div className="text-sm">
+									Already have an account?{" "}
+									<Link to="/login" className="font-semibold text-primary">
+										Login
+									</Link>
+								</div>
 							</form>
 						</Form>
 					</CardContent>

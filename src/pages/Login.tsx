@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Mail, Loader2 } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
 import {
 	Card,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-// import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import {
@@ -26,11 +24,13 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/lib/schemas";
 import * as z from "zod";
+import axios from "axios";
 
 const Login = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const from = location.state?.from?.pathname || "/";
+	console.log(from);
 
 	const [loading, setLoading] = useState(false);
 	const [googleLoading, setGoogleLoading] = useState(false);
@@ -47,43 +47,36 @@ const Login = () => {
 		setLoading(true);
 
 		try {
-			const { error } = await supabase.auth.signInWithPassword({
-				email: values.email,
-				password: values.password,
-			});
+			const response = await axios.post(
+				`${import.meta.env.VITE_SERVER_URL}/api/login`,
+				values,
+				{
+					withCredentials: true,
+				}
+			);
 
-			if (error) throw error;
-
-			toast.success("Login successful!");
-			navigate(from, { replace: true });
-		} catch (error) {
-			toast.error("Login failed. Please check your credentials.");
+			if (response.data.success) {
+				toast.success("Login successful!");
+				navigate(from, { replace: true });
+			} else {
+				toast.error(`Login failed: ${response.data.message}`);
+			}
+		} catch (error: unknown) {
+			toast.error(
+				`Login failed. Please check your credentials.\n ${
+					(error as Error).message
+				}`
+			);
 			console.error("Login error:", error);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleGoogleSignIn = async () => {
+	const handleGoogleSignIn = () => {
 		setGoogleLoading(true);
-		try {
-			const { error } = await supabase.auth.signInWithOAuth({
-				provider: "google",
-				options: {
-					redirectTo: `${window.location.origin}${from}`,
-					queryParams: {
-						access_type: "offline",
-						prompt: "consent",
-					},
-				},
-			});
-
-			if (error) throw error;
-		} catch (error) {
-			toast.error("Google sign-in failed. Please try again.");
-			console.error("Google sign-in error:", error);
-			setGoogleLoading(false);
-		}
+		window.location.href = `${import.meta.env.VITE_SERVER_URL}/auth/google`; // Redirect to Google OAuth route
+		setGoogleLoading(false);
 	};
 
 	return (
@@ -157,13 +150,13 @@ const Login = () => {
 						</Button>
 
 						<Separator>
-							<span className="px-2">Or continue with email</span>
+							<span className="px-2 mt-2">Or continue with email</span>
 						</Separator>
 
 						<Form {...form}>
 							<form
 								onSubmit={form.handleSubmit(onSubmit)}
-								className="grid gap-4"
+								className="grid gap-4 mt-4"
 							>
 								<FormField
 									control={form.control}
@@ -216,6 +209,12 @@ const Login = () => {
 									)}
 								</Button>
 							</form>
+							<div className="text-sm">
+								Don't have an account?{" "}
+								<Link to="/register" className="font-semibold text-primary">
+									Register
+								</Link>
+							</div>
 						</Form>
 					</CardContent>
 				</Card>
