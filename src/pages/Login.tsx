@@ -89,7 +89,7 @@ const Login = () => {
 					Or{" "}
 					<Link
 						to="/register"
-						className="font-medium text-indigo-600 hover:text-indigo-500"
+						className="font-medium text-primary-green hover:text-primary-dark-green"
 					>
 						register your business
 					</Link>
@@ -106,7 +106,7 @@ const Login = () => {
 							Or{" "}
 							<Link
 								to="/register"
-								className="font-medium text-indigo-600 hover:text-indigo-500"
+								className="font-medium text-primary-dark-green hover:text-primary-dark-green/70"
 							>
 								register your business
 							</Link>
@@ -197,7 +197,12 @@ const Login = () => {
 										</FormItem>
 									)}
 								/>
-
+								<Link
+									to={"/forgot-password"}
+									className="text-sm text-right text-primary-dark-green"
+								>
+									Forgot password?
+								</Link>
 								<Button type="submit" disabled={loading}>
 									{loading ? (
 										<>

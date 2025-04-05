@@ -59,7 +59,7 @@ const Register = () => {
 				toast.success(
 					"Registration successful! Please check your email to verify your account."
 				);
-				// navigate("/");
+				navigate("/");
 			} else {
 				if (response.data.message.includes("E11000")) {
 					toast.error("Email already exists");
