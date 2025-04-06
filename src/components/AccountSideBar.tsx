@@ -33,8 +33,7 @@ const items = [
 ];
 
 export function AccountSidebar() {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [activeTab, setActiveTab] = useQueryState(
+	const [, setActiveTab] = useQueryState(
 		"tab",
 		parseAsString.withDefault("Profile")
 	);

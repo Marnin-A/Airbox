@@ -1,4 +1,3 @@
-import React from "react";
 import { BarChart3, Users, Calendar, TrendingUp } from "lucide-react";
 import { Line } from "react-chartjs-2";
 import {
