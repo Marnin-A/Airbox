@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { Building2, Mail, Phone, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../../stores/AuthStore";
 import toast from "react-hot-toast";
 import { useGetUserDetails } from "@/lib/queries";
@@ -22,7 +21,7 @@ import { profileSchema } from "@/lib/schemas";
 const Profile = () => {
 	const { user } = useAuth();
 	const { data, isLoading } = useGetUserDetails(user?._id);
-	const { mutateAsync, isLoading: createProfileLoading } =
+	const { mutateAsync, isPending: createProfileLoading } =
 		useCreateOrgProfile();
 
 	const form = useForm({
@@ -37,18 +36,21 @@ const Profile = () => {
 	const onSubmit = async (values: z.infer<typeof profileSchema>) => {
 		try {
 			const { business_name, contact_email, phone } = values;
-			await mutateAsync({
-				business_name,
-				contact_email,
-				phone,
-				userId: user?._id,
-			});
-			toast.success("Profile updated successfully");
+			if (user?._id) {
+				await mutateAsync({
+					business_name,
+					contact_email,
+					phone,
+					userId: user?._id,
+				});
+				toast.success("Profile updated successfully");
+			} else {
+				toast.error("User ID is undefined");
+				return;
+			}
 		} catch (error) {
 			console.error("Error updating profile:", error);
 			toast.error("Failed to update profile");
-		} finally {
-			setSaving(false);
 		}
 	};
 
@@ -119,8 +121,8 @@ const Profile = () => {
 						/>
 
 						<div className="flex justify-end">
-							<Button type="submit" disabled={saving}>
-								{saving ? (
+							<Button type="submit" disabled={createProfileLoading}>
+								{createProfileLoading ? (
 									<>
 										<Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
 										Saving...

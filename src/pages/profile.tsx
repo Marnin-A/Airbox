@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { Building2, Mail, Phone, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../stores/AuthStore";
 import toast from "react-hot-toast";
 import { useGetUserDetails } from "@/lib/queries";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+// import { z } from "zod";
 import {
 	Form,
 	FormField,
@@ -32,25 +32,27 @@ const Profile = () => {
 		},
 	});
 
-	const onSubmit = async (values: z.infer<typeof profileSchema>) => {
-		setSaving(true);
-		try {
-			// const { error } = await supabase
-			// 	.from("profiles")
-			// 	.update({
-			// 		...values,
-			// 		updated_at: new Date().toISOString(),
-			// 	})
-			// 	.eq("id", user?._id);
-			// if (error) throw error;
-			toast.success("Profile updated successfully");
-		} catch (error) {
-			console.error("Error updating profile:", error);
-			toast.error("Failed to update profile");
-		} finally {
-			setSaving(false);
-		}
-	};
+	const onSubmit = async () =>
+		// values: z.infer<typeof profileSchema>
+		{
+			setSaving(true);
+			try {
+				// const { error } = await supabase
+				// 	.from("profiles")
+				// 	.update({
+				// 		...values,
+				// 		updated_at: new Date().toISOString(),
+				// 	})
+				// 	.eq("id", user?._id);
+				// if (error) throw error;
+				toast.success("Profile updated successfully");
+			} catch (error) {
+				console.error("Error updating profile:", error);
+				toast.error("Failed to update profile");
+			} finally {
+				setSaving(false);
+			}
+		};
 
 	if (isLoading) {
 		return (
